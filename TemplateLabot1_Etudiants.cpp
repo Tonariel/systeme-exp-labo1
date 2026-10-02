@@ -173,7 +173,7 @@ int main()
 {
    while (true)
    {
-      std::cout << "Detres> ";
+      std::cout << "DetresVidil> ";
       char command[128];
       cin.getline(command, 128);
 
