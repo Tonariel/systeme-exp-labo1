@@ -63,6 +63,132 @@ void create(int i, craft_t *c){                                                 
 	//AJOUTER VOTRE CODE ICI.
     /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
+    // Coupe de vin
+    if(c->liste.front() == "Or"){
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Argent"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[0]++;
+        cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    }
+    else if(c->liste.front() == "Bois"){ // Porte 
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Or"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[1]++;
+        cout << "**" << c->craft_name[1] <<"s crees: " << c->craft[1] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else if (c->liste.front() == "Metal") { // Table
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Bois"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[2]++;
+        cout << "**" << c->craft_name[2] <<"s crees: " << c->craft[2] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else if (c->liste.front() == "Diamants") { // Bague
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Metal"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[3]++;
+        cout << "**" << c->craft_name[3] <<"s crees: " << c->craft[3] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else if (c->liste.front() == "Fer") { // Chandelier
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Diamants"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[4]++;
+        cout << "**" << c->craft_name[4] <<"s crees: " << c->craft[4] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else if (c->liste.front() == "Jade") { // Épée
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Fer"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[5]++;
+        cout << "**" << c->craft_name[5] <<"s crees: " << c->craft[5] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else if (c->liste.front() == "Jade") {
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      if (c->liste.front() == "Argent"){
+        b[i] = c->liste.front();
+        c->liste.pop_front();
+        c->craft[6]++;
+        cout << "**" << c->craft_name[6] <<"s crees: " << c->craft[6] << " **" << endl;
+        this_thread::sleep_for(chrono::milliseconds(200));
+        c->liste.push_back(a[i]);
+        c->liste.push_back(b[i]);
+      }
+      else {
+        b[i] = "Waiting";
+        cout << a[i] << " is waiting" << endl;  
+        c->liste.push_back(a[i]);
+      }
+    } else {
+      a[i] = c->liste.front();
+      c->liste.pop_front();
+      c->liste.push_back(a[i]);
+    }
                                                                                             ///////////////////////////////////////////////////
 }                                                                                               // *** Fin fonction create() ******************* //
 
