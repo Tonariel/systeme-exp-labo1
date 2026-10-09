@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <chrono>
 #include <string>
+#include <mutex>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -73,7 +74,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -93,7 +94,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -114,7 +115,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -134,7 +135,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -155,7 +156,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -176,7 +177,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -197,7 +198,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
@@ -219,7 +220,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[0]++;
       cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(0.2));
+      this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
     }
