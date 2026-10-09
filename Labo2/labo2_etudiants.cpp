@@ -14,6 +14,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 using namespace std;
+mutex mtx;
 #define MAX 7                     // On définie le nombre de thread qu'on veut utiliser
 bool done = 0;                    // Variable qui sert à savoir si on a terminé de créer tous les objets
 string a[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // Tableaux tampons pour recevoir les matériaux pour 
@@ -65,7 +66,7 @@ void create(int i, craft_t *c){                                                 
   /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   
   //Coupe
-
+  mtx.lock();
   if(c->liste.front() == "Or"){
     a[i] = c->liste.front();
     c->liste.pop_front();
@@ -85,28 +86,8 @@ void create(int i, craft_t *c){                                                 
     }
   }
 
+
   //Porte
-
-  else if(c->liste.front() == "Bois"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Or"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-
-
-  //Table
 
   else if(c->liste.front() == "Bois"){
     c->liste.pop_front();
@@ -146,7 +127,6 @@ void create(int i, craft_t *c){                                                 
     }
   }
 
-
     //Bague
 
   else if(c->liste.front() == "Diamant"){
@@ -166,7 +146,6 @@ void create(int i, craft_t *c){                                                 
       c->liste.push_back(a[i]);
     }
   }
-
 
     //Chandelier
 
@@ -188,7 +167,6 @@ void create(int i, craft_t *c){                                                 
     }
   }
 
-
     //Epee
 
   else if(c->liste.front() == "Jade"){
@@ -209,9 +187,7 @@ void create(int i, craft_t *c){                                                 
     }
   }
 
-
-
-    //Bracelet
+  //Bracelet
 
   else if(c->liste.front() == "Jade"){
     c->liste.pop_front();
@@ -230,11 +206,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.push_back(a[i]);
     }
   }
-
-
-
-
-
+  mtx.unlock();
                                                                                       ///////////////////////////////////////////////////
 }                                                                                               // *** Fin fonction create() ******************* //
 
