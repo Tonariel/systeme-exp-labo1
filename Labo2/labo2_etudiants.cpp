@@ -13,8 +13,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
+
 using namespace std;
+
 mutex mtx;
+
 #define MAX 7                     // On définie le nombre de thread qu'on veut utiliser
 bool done = 0;                    // Variable qui sert à savoir si on a terminé de créer tous les objets
 string a[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // Tableaux tampons pour recevoir les matériaux pour 
