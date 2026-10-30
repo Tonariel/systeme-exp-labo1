@@ -65,13 +65,10 @@ void create(int i, craft_t *c){                                                 
 	//AJOUTER VOTRE CODE ICI.
   /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   
-  if (c->craft[i] >= 10){
-    return;
-  }
-
   string REQ1[MAX] = {"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
   string REQ2[MAX] = {"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
 
+  mtx.lock();
   if(c->liste.front() == REQ1[i]){
     a[i] = c->liste.front();
     c->liste.pop_front();
@@ -80,14 +77,18 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[i]++;
       cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
+      mtx.unlock();
       this_thread::sleep_for(chrono::milliseconds(200));
+      mtx.lock();
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
+      mtx.unlock();
     }
     else {
       b[i] = "Waiting";
       cout << a[i] << " is waiting" << endl;
       c->liste.push_back(a[i]);
+      mtx.unlock();
     }
   }
   else if(c->liste.front() == REQ2[i]){
@@ -98,16 +99,21 @@ void create(int i, craft_t *c){                                                 
       c->liste.pop_front();
       c->craft[i]++;
       cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
+      mtx.unlock();
       this_thread::sleep_for(chrono::milliseconds(200));
+      mtx.lock();
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
+      mtx.unlock();
     }
     else {
       b[i] = "Waiting";
       cout << a[i] << " is waiting" << endl;
       c->liste.push_back(a[i]);
+      mtx.unlock();
     }
   }
+  mtx.unlock();
                                                                                                 ///////////////////////////////////////////////////
 }                                                                                               // *** Fin fonction create() ******************* //
 
