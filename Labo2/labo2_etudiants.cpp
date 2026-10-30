@@ -9,10 +9,12 @@
 #include <pthread.h>
 #include <chrono>
 #include <string>
+#include <mutex>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 using namespace std;
+mutex mtx;
 #define MAX 7                     // On définie le nombre de thread qu'on veut utiliser
 bool done = 0;                    // Variable qui sert à savoir si on a terminé de créer tous les objets
 string a[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // Tableaux tampons pour recevoir les matériaux pour 
@@ -61,9 +63,52 @@ void create(int i, craft_t *c){                                                 
 	
 	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 	//AJOUTER VOTRE CODE ICI.
-    /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+  /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+  
+  if (c->craft[i] >= 10){
+    return;
+  }
 
-                                                                                            ///////////////////////////////////////////////////
+  string REQ1[MAX] = {"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
+  string REQ2[MAX] = {"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
+
+  if(c->liste.front() == REQ1[i]){
+    a[i] = c->liste.front();
+    c->liste.pop_front();
+    if (c->liste.front() == REQ2[i]){
+      b[i] = c->liste.front();
+      c->liste.pop_front();
+      c->craft[i]++;
+      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
+      this_thread::sleep_for(chrono::milliseconds(200));
+      c->liste.push_back(a[i]);
+      c->liste.push_back(b[i]);
+    }
+    else {
+      b[i] = "Waiting";
+      cout << a[i] << " is waiting" << endl;
+      c->liste.push_back(a[i]);
+    }
+  }
+  else if(c->liste.front() == REQ2[i]){
+    a[i] = c->liste.front();
+    c->liste.pop_front();
+    if (c->liste.front() == REQ1[i]){
+      b[i] = c->liste.front();
+      c->liste.pop_front();
+      c->craft[i]++;
+      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
+      this_thread::sleep_for(chrono::milliseconds(200));
+      c->liste.push_back(a[i]);
+      c->liste.push_back(b[i]);
+    }
+    else {
+      b[i] = "Waiting";
+      cout << a[i] << " is waiting" << endl;
+      c->liste.push_back(a[i]);
+    }
+  }
+                                                                                                ///////////////////////////////////////////////////
 }                                                                                               // *** Fin fonction create() ******************* //
 
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -78,8 +123,6 @@ void start(craft_t *c){                                                         
   }                                                                                             ///////////////////////////////////////////////////
   cout << "_____________________________________________"<< endl;                               // Ligne permettant de séparer dans le CLI.
 }                                                                                               // *** Fin fonction start() ******************** //
-
-
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 int main() {                                                                                    // *** Début fonction main() ******************* //
   craft_t craft;                                                                                // Permet de créer l'objet craft, qui va stocker nos informations tout au long du programme.    
