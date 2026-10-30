@@ -65,16 +65,21 @@ void create(int i, craft_t *c){                                                 
 	//AJOUTER VOTRE CODE ICI.
   /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   
-  //Coupe
-  mtx.lock();
-  if(c->liste.front() == "Or"){
+  if (c->craft[i] >= 10){
+    return;
+  }
+
+  string REQ1[MAX] = {"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
+  string REQ2[MAX] = {"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
+
+  if(c->liste.front() == REQ1[i]){
     a[i] = c->liste.front();
     c->liste.pop_front();
-    if (c->liste.front() == "Argent"){
+    if (c->liste.front() == REQ2[i]){
       b[i] = c->liste.front();
       c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
+      c->craft[i]++;
+      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
       this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
@@ -85,17 +90,14 @@ void create(int i, craft_t *c){                                                 
       c->liste.push_back(a[i]);
     }
   }
-
-
-  //Porte
-
-  else if(c->liste.front() == "Bois"){
+  else if(c->liste.front() == REQ2[i]){
+    a[i] = c->liste.front();
     c->liste.pop_front();
-    if (c->liste.front() == "Or"){
+    if (c->liste.front() == REQ1[i]){
       b[i] = c->liste.front();
       c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
+      c->craft[i]++;
+      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
       this_thread::sleep_for(chrono::milliseconds(200));
       c->liste.push_back(a[i]);
       c->liste.push_back(b[i]);
@@ -106,108 +108,7 @@ void create(int i, craft_t *c){                                                 
       c->liste.push_back(a[i]);
     }
   }
-
-  //Table
-
-  else if(c->liste.front() == "Metal"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Bois"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-
-    //Bague
-
-  else if(c->liste.front() == "Diamant"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Metal"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-
-    //Chandelier
-
-  else if(c->liste.front() == "Fer"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Diamant"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-
-    //Epee
-
-  else if(c->liste.front() == "Jade"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Fer"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-
-  //Bracelet
-
-  else if(c->liste.front() == "Jade"){
-    c->liste.pop_front();
-    if (c->liste.front() == "Argent"){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[0]++;
-      cout << "**" << c->craft_name[0] <<"s crees: " << c->craft[0] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-  mtx.unlock();
-                                                                                      ///////////////////////////////////////////////////
+                                                                                                ///////////////////////////////////////////////////
 }                                                                                               // *** Fin fonction create() ******************* //
 
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -222,8 +123,6 @@ void start(craft_t *c){                                                         
   }                                                                                             ///////////////////////////////////////////////////
   cout << "_____________________________________________"<< endl;                               // Ligne permettant de séparer dans le CLI.
 }                                                                                               // *** Fin fonction start() ******************** //
-
-
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 int main() {                                                                                    // *** Début fonction main() ******************* //
   craft_t craft;                                                                                // Permet de créer l'objet craft, qui va stocker nos informations tout au long du programme.    
