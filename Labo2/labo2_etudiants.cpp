@@ -76,105 +76,114 @@ void create(int i, craft_t *c){                                                 
     string req1 = c->name[mat1];
     string req2 = c->name[mat2];
 
-    // Verrouillage du mutex de la liste partagée
+    // On verrouille l'accès à la liste partagée
     mtx_list.lock();
 
     if (c->liste.size() >= 2) {
-        // On remet l'itérateur 'it' sur le 2e élément actuel de la liste (une fois le mutex verrouillé)
-        it = c->liste.begin();
-        advance(it, 1);
+        
+        // CAS 1 : Le 1er élément de la file est req1
+        if (c->liste.front() == req1) {
+            a[i] = c->liste.front();
+            c->liste.pop_front();
 
-        // Si cet objet a déjà ses 10 exemplaires et que son matériau bloque la tête de la file,
-        // il fait simplement tourner le 1er élément à la fin pour laisser la place aux autres !
-        if (c->craft[i] >= 10) {
-            if (c->liste.front() == req1 || c->liste.front() == req2) {
-                string temp = c->liste.front();
+            // Si le suivant est req2, on a nos 2 matériaux !
+            if (c->liste.front() == req2) {
+                std::lock(mtx_mat[mat1], mtx_mat[mat2]);
+
+                b[i] = c->liste.front();
                 c->liste.pop_front();
-                c->liste.push_back(temp);
+
+                c->craft[i]++;
+                cout << c->craft_name[i] << " en création." << endl;
+                cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+                fichier << c->craft_name[i] << " en création." << endl;
+                fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+
+                // On libère la liste pendant les 200 ms de fabrication
+                mtx_list.unlock();
+                this_thread::sleep_for(chrono::milliseconds(200));
+                mtx_list.lock();
+
+                // On remet a[i] et b[i] dans la file
+                c->liste.push_back(a[i]);
+                c->liste.push_back(b[i]);
+
+                mtx_mat[mat1].unlock();
+                mtx_mat[mat2].unlock();
+            } 
+            else {
+                b[i] = "Waiting";
+                cout << a[i] << " is waiting" << endl;
+                cout << c->craft_name[i] << " en attente de " << req2 << "." << endl;
+                fichier << a[i] << " is waiting" << endl;
+                fichier << c->craft_name[i] << " en attente de " << req2 << "." << endl;
+
+                c->liste.push_back(a[i]);
             }
         }
-        // Sinon (l'objet a moins de 10 exemplaires), il tente de fabriquer son objet :
-        else {
-            // CAS 1 : Le 1er élément est req1
+        // CAS 2 : Le 1er élément de la file est req2
+        else if (c->liste.front() == req2) {
+            a[i] = c->liste.front();
+            c->liste.pop_front();
+
+            // Si le suivant est req1, on a nos 2 matériaux !
             if (c->liste.front() == req1) {
-                a[i] = c->liste.front();
+                std::lock(mtx_mat[mat1], mtx_mat[mat2]);
+
+                b[i] = c->liste.front();
                 c->liste.pop_front();
 
-                // Si le 2e élément (maintenant en tête, aussi pointé par *it) est req2
-                if (c->liste.front() == req2) {
-                    std::lock(mtx_mat[mat1], mtx_mat[mat2]);
+                c->craft[i]++;
+                cout << c->craft_name[i] << " en création." << endl;
+                cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+                fichier << c->craft_name[i] << " en création." << endl;
+                fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
 
-                    b[i] = c->liste.front();
-                    c->liste.pop_front();
+                // On libère la liste pendant les 200 ms de fabrication
+                mtx_list.unlock();
+                this_thread::sleep_for(chrono::milliseconds(200));
+                mtx_list.lock();
 
-                    cout << c->craft_name[i] << " en création." << endl;
-                    fichier << c->craft_name[i] << " en création." << endl;
+                c->liste.push_back(a[i]);
+                c->liste.push_back(b[i]);
 
-                    c->craft[i]++;
-                    cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
-                    fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+                mtx_mat[mat1].unlock();
+                mtx_mat[mat2].unlock();
+            } 
+            else {
+                b[i] = "Waiting";
+                cout << a[i] << " is waiting" << endl;
+                cout << c->craft_name[i] << " en attente de " << req1 << "." << endl;
+                fichier << a[i] << " is waiting" << endl;
+                fichier << c->craft_name[i] << " en attente de " << req1 << "." << endl;
 
-                    this_thread::sleep_for(chrono::milliseconds(200));
-
-                    // On remet b[i] puis a[i] pour casser les paires et permettre aux voisins de créer !
-                    c->liste.push_back(b[i]);
-                    c->liste.push_back(a[i]);
-
-                    mtx_mat[mat1].unlock();
-                    mtx_mat[mat2].unlock();
-                } 
-                else {
-                    b[i] = "Waiting";
-                    cout << a[i] << " is waiting" << endl;
-                    cout << c->craft_name[i] << " en attente de " << req2 << "." << endl;
-                    fichier << a[i] << " is waiting" << endl;
-                    fichier << c->craft_name[i] << " en attente de " << req2 << "." << endl;
-
-                    c->liste.push_back(a[i]);
-                }
+                c->liste.push_back(a[i]);
             }
-            // CAS 2 : Le 1er élément est req2
-            else if (c->liste.front() == req2) {
-                a[i] = c->liste.front();
-                c->liste.pop_front();
+        }
+        // CAS 3 : Utilisation de l'itérateur 'it' (2e position de la file) !
+        // Si notre matériau n'est pas en 1re position, on regarde s'il est en 2e position avec 'it'
+        else {
+            it = c->liste.begin();
+            advance(it, 1); // Pointe sur le 2e élément de la file actuelle
+            
+            if (*it == req1 || *it == req2) {
+                // On retire notre matériau de la 2e position et on le remet à la fin
+                // Cela permute l'ordre des éléments dans la file et brise les boucles infinies !
+                a[i] = *it;
+                b[i] = "Waiting";
+                c->liste.erase(it);
+                c->liste.push_back(a[i]);
 
-                // Si le 2e élément est req1
-                if (c->liste.front() == req1) {
-                    std::lock(mtx_mat[mat1], mtx_mat[mat2]);
-
-                    b[i] = c->liste.front();
-                    c->liste.pop_front();
-
-                    cout << c->craft_name[i] << " en création." << endl;
-                    fichier << c->craft_name[i] << " en création." << endl;
-
-                    c->craft[i]++;
-                    cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
-                    fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
-
-                    this_thread::sleep_for(chrono::milliseconds(200));
-
-                    // On remet b[i] puis a[i] pour mélanger la file
-                    c->liste.push_back(b[i]);
-                    c->liste.push_back(a[i]);
-
-                    mtx_mat[mat1].unlock();
-                    mtx_mat[mat2].unlock();
-                } 
-                else {
-                    b[i] = "Waiting";
-                    cout << a[i] << " is waiting" << endl;
-                    cout << c->craft_name[i] << " en attente de " << req1 << "." << endl;
-                    fichier << a[i] << " is waiting" << endl;
-                    fichier << c->craft_name[i] << " en attente de " << req1 << "." << endl;
-
-                    c->liste.push_back(a[i]);
-                }
+                string manquant = (a[i] == req1) ? req2 : req1;
+                cout << a[i] << " is waiting" << endl;
+                cout << c->craft_name[i] << " en attente de " << manquant << "." << endl;
+                fichier << a[i] << " is waiting" << endl;
+                fichier << c->craft_name[i] << " en attente de " << manquant << "." << endl;
             }
         }
     }
 
-    // Vérification si les 7 objets ont tous atteint 10 exemplaires
+    // Condition d'arrêt : au moins 10 objets créés pour chaque type
     bool tous_finis = true;
     for (int k = 0; k < MAX; k++) {
         if (c->craft[k] < 10) {
@@ -188,8 +197,8 @@ void create(int i, craft_t *c){                                                 
 
     mtx_list.unlock();
 
-                                                                                            ///////////////////////////////////////////////////
-}                                                                                               // *** Fin fonction create() ******************* //                                                                                               // *** Fin fonction create() ******************* //                                                                                             // *** Fin fonction create() ******************* //                                                                                              // *** Fin fonction create() ******************* //
+                                                                                                ///////////////////////////////////////////////////
+}                                                                                               // *** Fin fonction create() ******************* //                                                                                               // *** Fin fonction create() ******************* //                                                                                              // *** Fin fonction create() ******************* //                                                                                               // *** Fin fonction create() ******************* //                                                                                             // *** Fin fonction create() ******************* //                                                                                              // *** Fin fonction create() ******************* //
 
 
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
