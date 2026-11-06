@@ -9,14 +9,11 @@
 #include <pthread.h>
 #include <chrono>
 #include <string>
-#include <mutex>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 
 using namespace std;
-
-mutex mtx;
 
 #define MAX 7                     // On définie le nombre de thread qu'on veut utiliser
 bool done = 0;                    // Variable qui sert à savoir si on a terminé de créer tous les objets
@@ -26,7 +23,12 @@ string b[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // la 
 /////////////////////////////////////////////////////////////
 //AJOUTER VOS INCLUDE ET AUTRES ICI!!!!!!!!!!!!!!!!!!!!!!!!//
 
+#include <mutex>
+#include <fstream>
 
+mutex mtx_list; // Mutex pour protéger l'accès à la liste partagée
+mutex mtx_mat[MAX]; // Mutex pour protéger l'accès aux matériaux
+ofstream fichier("sortieCreation.txt");
 
 
 
@@ -63,56 +65,132 @@ string b[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // la 
 void create(int i, craft_t *c){                                                                 // *** Début fonction create() ***************** //
     list<string>::iterator it = c->liste.begin();                                               // Création itérateur it pour faire une recherche.
     advance(it,1);                                                                              // On place l'itérateur à la seconde position de la file pour savoir la valeur.
-	
-	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-	//AJOUTER VOTRE CODE ICI.
-  /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   
-  if (c->craft[i] >= 10){
-    return;
-  }
+  /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+  //AJOUTER VOTRE CODE ICI.
+  /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
-  string REQ1[MAX] = {"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
-  string REQ2[MAX] = {"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
+    // Recette de l'objet i : matériau i et matériau (i + 1) % 7
+    int mat1 = i;
+    int mat2 = (i + 1) % MAX;
+    string req1 = c->name[mat1];
+    string req2 = c->name[mat2];
 
-  if(c->liste.front() == REQ1[i]){
-    a[i] = c->liste.front();
-    c->liste.pop_front();
-    if (c->liste.front() == REQ2[i]){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[i]++;
-      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
+    // Verrouillage du mutex de la liste partagée
+    mtx_list.lock();
+
+    if (c->liste.size() >= 2) {
+        // On remet l'itérateur 'it' sur le 2e élément actuel de la liste (une fois le mutex verrouillé)
+        it = c->liste.begin();
+        advance(it, 1);
+
+        // Si cet objet a déjà ses 10 exemplaires et que son matériau bloque la tête de la file,
+        // il fait simplement tourner le 1er élément à la fin pour laisser la place aux autres !
+        if (c->craft[i] >= 10) {
+            if (c->liste.front() == req1 || c->liste.front() == req2) {
+                string temp = c->liste.front();
+                c->liste.pop_front();
+                c->liste.push_back(temp);
+            }
+        }
+        // Sinon (l'objet a moins de 10 exemplaires), il tente de fabriquer son objet :
+        else {
+            // CAS 1 : Le 1er élément est req1
+            if (c->liste.front() == req1) {
+                a[i] = c->liste.front();
+                c->liste.pop_front();
+
+                // Si le 2e élément (maintenant en tête, aussi pointé par *it) est req2
+                if (c->liste.front() == req2) {
+                    std::lock(mtx_mat[mat1], mtx_mat[mat2]);
+
+                    b[i] = c->liste.front();
+                    c->liste.pop_front();
+
+                    cout << c->craft_name[i] << " en création." << endl;
+                    fichier << c->craft_name[i] << " en création." << endl;
+
+                    c->craft[i]++;
+                    cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+                    fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+
+                    this_thread::sleep_for(chrono::milliseconds(200));
+
+                    // On remet b[i] puis a[i] pour casser les paires et permettre aux voisins de créer !
+                    c->liste.push_back(b[i]);
+                    c->liste.push_back(a[i]);
+
+                    mtx_mat[mat1].unlock();
+                    mtx_mat[mat2].unlock();
+                } 
+                else {
+                    b[i] = "Waiting";
+                    cout << a[i] << " is waiting" << endl;
+                    cout << c->craft_name[i] << " en attente de " << req2 << "." << endl;
+                    fichier << a[i] << " is waiting" << endl;
+                    fichier << c->craft_name[i] << " en attente de " << req2 << "." << endl;
+
+                    c->liste.push_back(a[i]);
+                }
+            }
+            // CAS 2 : Le 1er élément est req2
+            else if (c->liste.front() == req2) {
+                a[i] = c->liste.front();
+                c->liste.pop_front();
+
+                // Si le 2e élément est req1
+                if (c->liste.front() == req1) {
+                    std::lock(mtx_mat[mat1], mtx_mat[mat2]);
+
+                    b[i] = c->liste.front();
+                    c->liste.pop_front();
+
+                    cout << c->craft_name[i] << " en création." << endl;
+                    fichier << c->craft_name[i] << " en création." << endl;
+
+                    c->craft[i]++;
+                    cout << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+                    fichier << "** " << c->craft_name[i] << "s crees: " << c->craft[i] << " **" << endl;
+
+                    this_thread::sleep_for(chrono::milliseconds(200));
+
+                    // On remet b[i] puis a[i] pour mélanger la file
+                    c->liste.push_back(b[i]);
+                    c->liste.push_back(a[i]);
+
+                    mtx_mat[mat1].unlock();
+                    mtx_mat[mat2].unlock();
+                } 
+                else {
+                    b[i] = "Waiting";
+                    cout << a[i] << " is waiting" << endl;
+                    cout << c->craft_name[i] << " en attente de " << req1 << "." << endl;
+                    fichier << a[i] << " is waiting" << endl;
+                    fichier << c->craft_name[i] << " en attente de " << req1 << "." << endl;
+
+                    c->liste.push_back(a[i]);
+                }
+            }
+        }
     }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
+
+    // Vérification si les 7 objets ont tous atteint 10 exemplaires
+    bool tous_finis = true;
+    for (int k = 0; k < MAX; k++) {
+        if (c->craft[k] < 10) {
+            tous_finis = false;
+            break;
+        }
     }
-  }
-  else if(c->liste.front() == REQ2[i]){
-    a[i] = c->liste.front();
-    c->liste.pop_front();
-    if (c->liste.front() == REQ1[i]){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[i]++;
-      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
+    if (tous_finis) {
+        done = 1;
     }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
-  }
-                                                                                                ///////////////////////////////////////////////////
-}                                                                                               // *** Fin fonction create() ******************* //
+
+    mtx_list.unlock();
+
+                                                                                            ///////////////////////////////////////////////////
+}                                                                                               // *** Fin fonction create() ******************* //                                                                                               // *** Fin fonction create() ******************* //                                                                                             // *** Fin fonction create() ******************* //                                                                                              // *** Fin fonction create() ******************* //
+
 
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 void start(craft_t *c){                                                                         // *** Début fonction start() ****************** //
