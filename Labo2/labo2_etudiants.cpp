@@ -23,6 +23,7 @@ string b[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // la 
 
 #include <mutex>
 #include <algorithm>
+#include <fstream>
 
 string craft_a[MAX]{"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
 string craft_b[MAX]{"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
@@ -30,6 +31,7 @@ string craft_b[MAX]{"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"}
 std::mutex m;
 int prio = 3;
 int passages = 0;
+ofstream fichier("sortieCreation.txt");
 /////////////////////////////////////////////////////////////
 
 
@@ -64,8 +66,6 @@ void create(int i, craft_t *c) {
   string elem_1 = craft_a[i];
   string elem_2 = craft_b[i];
 
-  bool objetCreer = false;
-
   while (true) {
       m.lock();
 
@@ -81,14 +81,32 @@ void create(int i, craft_t *c) {
             a[i] = elem_1;
             b[i] = elem_2;
 
-            objetCreer = true;
+            cout << c->craft_name[i] << " en création" << endl;
+            fichier << c->craft_name[i] << " en création" << endl;
+            
+            m.unlock();
+            this_thread::sleep_for(chrono::milliseconds(200));
+            m.lock();
+            c->liste.push_back(elem_1);
+            c->liste.push_back(elem_2);
+            c->craft[i]++;
+
+
+            cout << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
+            fichier << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
         } else {
             a[i] = (it1 != c->liste.end()) ? elem_1 : "Waiting";
             b[i] = (it2 != c->liste.end()) ? elem_2 : "Waiting";
 
-            if (it1 != c->liste.end()) cout << a[i] << " is waiting" << endl;
+            if (it1 == c->liste.end()) {
+              cout << c->craft_name[i] << " en attente de " << elem_1 << endl;
+              fichier << c->craft_name[i] << " en attente de " << elem_1 << endl;
+            }
 
-            if (it2 != c->liste.end()) cout << b[i] << " is waiting" << endl;
+            if (it2 == c->liste.end()) {
+              cout << c->craft_name[i] << " en attente de " << elem_2 << endl;
+              fichier << c->craft_name[i] << " en attente de " << elem_2 << endl;
+            }
         }
 
         passages++;
@@ -107,18 +125,7 @@ void create(int i, craft_t *c) {
     m.unlock();
   }
 
-  if (!objetCreer) return;
-
-  this_thread::sleep_for(chrono::milliseconds(200));
-
   m.lock();
-
-  c->liste.push_back(elem_1);
-  c->liste.push_back(elem_2);
-
-  c->craft[i]++;
-
-  cout << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
 
   bool termine = true;
 
@@ -148,6 +155,7 @@ void start(craft_t *c){                                                         
     t.join();                                                                                   // au fur et à mesure.
   }                                                                                             ///////////////////////////////////////////////////
   cout << "_____________________________________________"<< endl;                               // Ligne permettant de séparer dans le CLI.
+  fichier << "_____________________________________________"<< endl;                            // Ligne permettant de séparer dans le fichier.
 }                                                                                               // *** Fin fonction start() ******************** //
 
 
