@@ -23,10 +23,17 @@ string b[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // la 
 /////////////////////////////////////////////////////////////
 //AJOUTER VOS INCLUDE ET AUTRES ICI!!!!!!!!!!!!!!!!!!!!!!!!//
 
+#include <mutex>
+#include <algorithm>
+#include <fstream>
 
+string craft_a[MAX]{"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
+string craft_b[MAX]{"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
 
-
-
+std::mutex m;
+int prio = 3;
+int passages = 0;
+ofstream fichier("sortieCreation.txt");
 /////////////////////////////////////////////////////////////
 
 
@@ -57,59 +64,87 @@ string b[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // la 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
 
-void create(int i, craft_t *c){                                                                 // *** Début fonction create() ***************** //
-    list<string>::iterator it = c->liste.begin();                                               // Création itérateur it pour faire une recherche.
-    advance(it,1);                                                                              // On place l'itérateur à la seconde position de la file pour savoir la valeur.
-	
-	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-	//AJOUTER VOTRE CODE ICI.
-  /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-  
-  if (c->craft[i] >= 10){
-    return;
+void create(int i, craft_t *c) {
+  string elem_1 = craft_a[i];
+  string elem_2 = craft_b[i];
+
+  while (true) {
+      m.lock();
+
+      if (i == prio || passages != 0) {
+        auto it1 = find(c->liste.begin(), c->liste.end(), elem_1);
+        auto it2 = find(c->liste.begin(), c->liste.end(), elem_2);
+
+        if (it1 != c->liste.end() && it2 != c->liste.end()) {
+
+            c->liste.erase(it1);
+            c->liste.erase(it2);
+
+            a[i] = elem_1;
+            b[i] = elem_2;
+
+            cout << c->craft_name[i] << " en création" << endl;
+            fichier << c->craft_name[i] << " en création" << endl;
+            
+            m.unlock();
+            this_thread::sleep_for(chrono::milliseconds(200));
+            m.lock();
+            c->liste.push_back(elem_1);
+            c->liste.push_back(elem_2);
+            c->craft[i]++;
+
+
+            cout << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
+            fichier << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
+        } else {
+            a[i] = (it1 != c->liste.end()) ? elem_1 : "Waiting";
+            b[i] = (it2 != c->liste.end()) ? elem_2 : "Waiting";
+
+            if (it1 == c->liste.end()) {
+              cout << c->craft_name[i] << " en attente de " << elem_1 << endl;
+              fichier << c->craft_name[i] << " en attente de " << elem_1 << endl;
+            }
+
+            if (it2 == c->liste.end()) {
+              cout << c->craft_name[i] << " en attente de " << elem_2 << endl;
+              fichier << c->craft_name[i] << " en attente de " << elem_2 << endl;
+            }
+        }
+
+        passages++;
+        if (passages == MAX) {
+          passages = 0;
+
+          prio++;
+
+          if (prio == MAX) prio = 0;
+        }
+
+        m.unlock();
+        break;
+    }
+
+    m.unlock();
   }
 
-  string REQ1[MAX] = {"Or", "Bois", "Metal", "Diamant", "Fer", "Jade", "Jade"};
-  string REQ2[MAX] = {"Argent", "Or", "Bois", "Metal", "Diamant", "Fer", "Argent"};
+  m.lock();
 
-  if(c->liste.front() == REQ1[i]){
-    a[i] = c->liste.front();
-    c->liste.pop_front();
-    if (c->liste.front() == REQ2[i]){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[i]++;
-      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
+  bool termine = true;
+
+  for (int j = 0; j < MAX; j++) {
+    if (c->craft[j] < 10) {
+        termine = false;
+        break;
     }
   }
-  else if(c->liste.front() == REQ2[i]){
-    a[i] = c->liste.front();
-    c->liste.pop_front();
-    if (c->liste.front() == REQ1[i]){
-      b[i] = c->liste.front();
-      c->liste.pop_front();
-      c->craft[i]++;
-      cout << "** " << c->craft_name[i] <<"s crees: " << c->craft[i] << " **" << endl;
-      this_thread::sleep_for(chrono::milliseconds(200));
-      c->liste.push_back(a[i]);
-      c->liste.push_back(b[i]);
-    }
-    else {
-      b[i] = "Waiting";
-      cout << a[i] << " is waiting" << endl;
-      c->liste.push_back(a[i]);
-    }
+
+  if (termine) {
+    done = true;
   }
-                                                                                                ///////////////////////////////////////////////////
-}                                                                                               // *** Fin fonction create() ******************* //
+
+  m.unlock();
+}
+                                                                                              // *** Fin fonction create() ******************* //
 
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 void start(craft_t *c){                                                                         // *** Début fonction start() ****************** //
@@ -122,6 +157,7 @@ void start(craft_t *c){                                                         
     t.join();                                                                                   // au fur et à mesure.
   }                                                                                             ///////////////////////////////////////////////////
   cout << "_____________________________________________"<< endl;                               // Ligne permettant de séparer dans le CLI.
+  fichier << "_____________________________________________"<< endl;                            // Ligne permettant de séparer dans le fichier.
 }                                                                                               // *** Fin fonction start() ******************** //
 /*!!!!!!!!!! NE PAS TOUCHER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 int main() {                                                                                    // *** Début fonction main() ******************* //
@@ -201,17 +237,17 @@ int main() {                                                                    
 /**/    y = 10;                                                                                 /**/
 /**/    XSetForeground(dis,gc,BlackPixel(dis, screen));                                         /**/
 /**/    XDrawString(dis,win,gc,x,y+200,"Appuyer sur 's' pour cycle",26);                        /**/
-/**/    XDrawString(dis,win,gc,x,y+210,"Appuyer 'r' pour refresh page",25);                         /**/
-/**/    XDrawString(dis,win,gc,x,y+220,"Appuyer 't' pour reset statut",29);                         /**/
-/**/    XDrawString(dis,win,gc,x,y+230,"Appuyer 'q' pour quit",21);                                 /**/
+/**/    XDrawString(dis,win,gc,x,y+210,"Appuyer 'r' pour refresh page",25);                     /**/
+/**/    XDrawString(dis,win,gc,x,y+220,"Appuyer 't' pour reset statut",29);                     /**/
+/**/    XDrawString(dis,win,gc,x,y+230,"Appuyer 'q' pour quit",21);                             /**/
 /**/    XDrawString(dis,win,gc,x,y+250,"Recipes:",8);                                           /**/
-/**/    XDrawString(dis,win,gc,x,y+260,"Argent + Or = Coupe",19);                            /**/
-/**/    XDrawString(dis,win,gc,x,y+270,"Or + Bois = Porte",17);                             /**/
-/**/    XDrawString(dis,win,gc,x,y+280,"Bois + Metal = Table",20);                            /**/
-/**/    XDrawString(dis,win,gc,x,y+290,"Metal + Diamant = Bague",23);                             /**/
-/**/    XDrawString(dis,win,gc,x,y+300,"Diamant + Fer = Chandelier",26);                         /**/
-/**/    XDrawString(dis,win,gc,x,y+310,"Fer + Jade = Epee",17);                           /**/
-/**/    XDrawString(dis,win,gc,x,y+320,"Jade + Argent = Bracelet",24);                           /**/
+/**/    XDrawString(dis,win,gc,x,y+260,"Argent + Or = Coupe",19);                               /**/
+/**/    XDrawString(dis,win,gc,x,y+270,"Or + Bois = Porte",17);                                 /**/
+/**/    XDrawString(dis,win,gc,x,y+280,"Bois + Metal = Table",20);                              /**/
+/**/    XDrawString(dis,win,gc,x,y+290,"Metal + Diamant = Bague",23);                           /**/
+/**/    XDrawString(dis,win,gc,x,y+300,"Diamant + Fer = Chandelier",26);                        /**/
+/**/    XDrawString(dis,win,gc,x,y+310,"Fer + Jade = Epee",17);                                 /**/
+/**/    XDrawString(dis,win,gc,x,y+320,"Jade + Argent = Bracelet",24);                          /**/
 /**/}                                                                                           /**/
 /**/                                                                                            /**/
 /**/void afficher(craft_t *c){                                                                  /**/
@@ -230,7 +266,7 @@ int main() {                                                                    
 /**/  for(int k = 0; k <7; k++){                                                                /**/
 /**/    string kk = to_string(k+1);                                                             /**/
 /**/    XSetForeground(dis,gc,BlackPixel(dis, screen));                                         /**/
-/**/    XDrawString(dis,win,gc,x,y,"Objet ",6);                                          /**/
+/**/    XDrawString(dis,win,gc,x,y,"Objet ",6);                                                 /**/
 /**/    XDrawString(dis,win,gc,x+72,y,kk.c_str(),1);                                            /**/
 /**/    XDrawString(dis,win,gc,x+76,y," : ",3);                                                 /**/
 /**/    XSetForeground(dis,gc,red);                                                             /**/
@@ -240,7 +276,7 @@ int main() {                                                                    
 /**/  }                                                                                         /**/
 /**/  if (done == 1){                                                                           /**/
 /**/    XSetForeground(dis,gc,green);                                                           /**/
-/**/    XDrawString(dis,win,gc,x,y+10,"Items completes!",15);                             /**/
+/**/    XDrawString(dis,win,gc,x,y+10,"Items completes!",15);                                   /**/
 /**/  }                                                                                         /**/
 /**/  menu();                                                                                   /**/
 /**/}                                                                                           /**/
