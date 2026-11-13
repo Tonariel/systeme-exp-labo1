@@ -14,7 +14,6 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 using namespace std;
-mutex mtx;
 #define MAX 7                     // On définie le nombre de thread qu'on veut utiliser
 bool done = 0;                    // Variable qui sert à savoir si on a terminé de créer tous les objets
 string a[MAX] = {"Free", "Free", "Free", "Free", "Free", "Free", "Free"}; // Tableaux tampons pour recevoir les matériaux pour 
@@ -65,59 +64,75 @@ ofstream fichier("sortieCreation.txt");
 
 
 void create(int i, craft_t *c) {
+  // Récupération des 2 éléments nécessaires à la recette du thread
   string elem_1 = craft_a[i];
   string elem_2 = craft_b[i];
 
   while (true) {
-      m.lock();
+      m.lock(); // Lock du mutex pour protéger la liste des éléments
 
+      // Le thread prioritaire passe en premier
+      // Une fois qu'il est passé, les autres peuvent tous passé en même temps
       if (i == prio || passages != 0) {
+        // Recherche des 2 éléments nécessaires dans la liste des éléments disponible
         auto it1 = find(c->liste.begin(), c->liste.end(), elem_1);
         auto it2 = find(c->liste.begin(), c->liste.end(), elem_2);
 
+        // Vérification des deux éléments
         if (it1 != c->liste.end() && it2 != c->liste.end()) {
 
-            c->liste.erase(it1);
-            c->liste.erase(it2);
+          // Les 2 éléments sont retirés de la liste pour la création
+          c->liste.erase(it1); 
+          c->liste.erase(it2);
 
-            a[i] = elem_1;
-            b[i] = elem_2;
+          // Affiche les éléments dans l'interface graphique
+          a[i] = elem_1;
+          b[i] = elem_2;
 
-            cout << c->craft_name[i] << " en création" << endl;
-            fichier << c->craft_name[i] << " en création" << endl;
-            
-            m.unlock();
-            this_thread::sleep_for(chrono::milliseconds(200));
-            m.lock();
-            c->liste.push_back(elem_1);
-            c->liste.push_back(elem_2);
-            c->craft[i]++;
+          // Affichage dans le terminal et enregistrement dans le fichier de la fabrication de l'objet 
+          cout << c->craft_name[i] << " en création" << endl;
+          fichier << c->craft_name[i] << " en création" << endl;
+          
+          // Unlock du mutex pendant la création pour laisser les autres threads accéder à la liste des éléments
+          m.unlock(); 
+          this_thread::sleep_for(chrono::milliseconds(200)); // Simulation du temps de création de l'objet
+          m.lock(); // Lock du mutex pour remettre les éléments dans la liste
 
+          // Remet les 2 éléments dans la liste
+          c->liste.push_back(elem_1);
+          c->liste.push_back(elem_2);
+          c->craft[i]++; // Incrémente le compteur de l'objet créé
 
-            cout << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
-            fichier << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
+          // Affichage et enregistrement du nombre d'objet créés au total
+          cout << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
+          fichier << "** " << c->craft_name[i] << "s crees : " << c->craft[i] << " **" << endl;
         } else {
-            a[i] = (it1 != c->liste.end()) ? elem_1 : "Waiting";
-            b[i] = (it2 != c->liste.end()) ? elem_2 : "Waiting";
+          // Si il n'y a pas l'élément alors on l'affiche dans l'interface graphique
+          a[i] = (it1 != c->liste.end()) ? elem_1 : "Waiting";
+          b[i] = (it2 != c->liste.end()) ? elem_2 : "Waiting";
 
-            if (it1 == c->liste.end()) {
-              cout << c->craft_name[i] << " en attente de " << elem_1 << endl;
-              fichier << c->craft_name[i] << " en attente de " << elem_1 << endl;
-            }
+          // Affichage et enregistrement du premier élément manquant 
+          if (it1 == c->liste.end()) {
+            cout << c->craft_name[i] << " en attente de " << elem_1 << endl;
+            fichier << c->craft_name[i] << " en attente de " << elem_1 << endl;
+          }
 
-            if (it2 == c->liste.end()) {
-              cout << c->craft_name[i] << " en attente de " << elem_2 << endl;
-              fichier << c->craft_name[i] << " en attente de " << elem_2 << endl;
-            }
+          // Affichage et enregistrement du deuxième élément manquant
+          if (it2 == c->liste.end()) {
+            cout << c->craft_name[i] << " en attente de " << elem_2 << endl;
+            fichier << c->craft_name[i] << " en attente de " << elem_2 << endl;
+          }
         }
 
-        passages++;
+        passages++; // Indique que le thread a terminé son passage 
+
+        // Dès que les 7 threads sont passés on change la priorité
         if (passages == MAX) {
           passages = 0;
 
-          prio++;
+          prio++; // Passage de la priorité au thread suivant
 
-          if (prio == MAX) prio = 0;
+          if (prio == MAX) prio = 0; // Si dépasse le dernier thread, alors on retourne au premier 
         }
 
         m.unlock();
@@ -131,6 +146,7 @@ void create(int i, craft_t *c) {
 
   bool termine = true;
 
+  // Vérification des compteurs des 7 objets
   for (int j = 0; j < MAX; j++) {
     if (c->craft[j] < 10) {
         termine = false;
@@ -138,6 +154,7 @@ void create(int i, craft_t *c) {
     }
   }
 
+  // Si chaque objets est créer au moins 10 fois, le programme est terminé
   if (termine) {
     done = true;
   }
